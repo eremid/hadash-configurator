@@ -437,12 +437,18 @@ function getSfIcon(name: string): LucideIcon {
   return SF_SYMBOL_MAP[name] || HomeIcon;
 }
 
+function SfIcon({ name, className, strokeWidth, style }: { name: string; className?: string; strokeWidth?: number; style?: React.CSSProperties }) {
+  const Icon = getSfIcon(name);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const IconComp = Icon as any;
+  return <IconComp className={className} strokeWidth={strokeWidth} style={style} />;
+}
+
 // --- Icon Picker Component ---
 
 function IconPicker({ value, onChange, lang }: { value: string; onChange: (v: string) => void; lang: Language }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const SelectedIcon = getSfIcon(value);
 
   const filteredIcons = search
     ? ICON_CATALOG.filter(e => e.sfName.toLowerCase().includes(search.toLowerCase()))
@@ -458,7 +464,7 @@ function IconPicker({ value, onChange, lang }: { value: string; onChange: (v: st
         onClick={() => setOpen(!open)}
         className="w-full flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-slate-100 hover:border-slate-500 transition-all text-left"
       >
-        <SelectedIcon className="w-5 h-5 text-blue-400 shrink-0" strokeWidth={1.5} />
+        <SfIcon name={value} className="w-5 h-5 text-blue-400 shrink-0" strokeWidth={1.5} />
         <span className="flex-1 truncate text-sm">{value || 'house.fill'}</span>
         <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
@@ -576,7 +582,6 @@ function WatchPreview({ actions, title, lang }: { actions: ActionItem[]; title: 
                         );
                       }
                       const colors = WATCH_COLOR_MAP[action.color] || WATCH_COLOR_MAP.blue;
-                      const IconComponent = getSfIcon(action.icon);
                       const hasStatus = action.statusEntityId?.trim();
 
                       return (
@@ -588,9 +593,10 @@ function WatchPreview({ actions, title, lang }: { actions: ActionItem[]; title: 
                             backgroundColor: colors.bg,
                           }}
                         >
-                          <IconComponent
+                          <SfIcon
+                            name={action.icon}
                             className="w-6 h-6"
-                            style={{ color: colors.text }}
+                            style={{ color: colors.text } as React.CSSProperties}
                             strokeWidth={1.5}
                           />
                           {hasStatus && (
@@ -685,9 +691,10 @@ interface InputProps {
   error?: boolean | string;
   errorMessage?: string;
   hint?: string;
+  maxLength?: number;
 }
 
-const InputWithError = ({ label, value, onChange, placeholder, type = "text", error, errorMessage, hint }: InputProps) => (
+const InputWithError = ({ label, value, onChange, placeholder, type = "text", error, errorMessage, hint, maxLength }: InputProps) => (
   <div>
     <label>{label}</label>
     <input
@@ -696,6 +703,7 @@ const InputWithError = ({ label, value, onChange, placeholder, type = "text", er
       className={`w-full ${error ? 'border-red-500 focus:ring-red-500' : ''}`}
       value={value}
       onChange={onChange}
+      maxLength={maxLength}
     />
     {hint && !error && <p className="text-slate-500 text-xs mt-1">{hint}</p>}
     {error && <p className="text-red-500 text-xs mt-1">{errorMessage}</p>}
@@ -932,6 +940,7 @@ export default function App() {
                   error={config.haURL !== '' && !isValidHAUrl(config.haURL)}
                   onChange={(e) => setConfig({ ...config, haURL: e.target.value.trim() })}
                   errorMessage={t.validationErrorURL}
+                  maxLength={255}
                 />
                 <InputWithError
                   label={t.haToken}
@@ -940,6 +949,7 @@ export default function App() {
                   value={config.haToken}
                   onChange={(e) => setConfig({ ...config, haToken: e.target.value.trim() })}
                   errorMessage=""
+                  maxLength={1000}
                 />
               </div>
             </div>
@@ -1081,6 +1091,7 @@ export default function App() {
                           value={action.label}
                           onChange={(e) => updateAction(index, 'label', e.target.value)}
                           errorMessage=""
+                          maxLength={32}
                         />
                         <IconPicker
                           value={action.icon}
@@ -1145,6 +1156,7 @@ export default function App() {
                         error={action.entityId !== '' && !isValidEntityId(action.entityId)}
                         onChange={(e) => updateAction(index, 'entityId', e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ''))}
                         errorMessage={t.validationErrorEntity}
+                        maxLength={100}
                       />
 
                       {/* Status Entity ID */}
@@ -1156,6 +1168,7 @@ export default function App() {
                         onChange={(e) => updateAction(index, 'statusEntityId', e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ''))}
                         errorMessage={t.validationErrorEntity}
                         hint={t.actionStatusEntityHint}
+                        maxLength={100}
                       />
 
                       {/* Service Data */}
@@ -1167,6 +1180,7 @@ export default function App() {
                           className={`w-full ${action.serviceData && !isValidJson(action.serviceData) ? 'border-red-500 focus:ring-red-500' : ''}`}
                           value={action.serviceData}
                           onChange={(e) => updateAction(index, 'serviceData', e.target.value)}
+                          maxLength={1000}
                         />
                         {action.serviceData && !isValidJson(action.serviceData) && (
                           <p className="text-red-500 text-xs mt-1">{t.validationErrorJson}</p>
