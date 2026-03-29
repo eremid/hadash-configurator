@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import pako from 'pako';
 import {
@@ -437,18 +437,32 @@ function getSfIcon(name: string): LucideIcon {
   return SF_SYMBOL_MAP[name] || HomeIcon;
 }
 
+function DynamicIcon({ name, ...props }: { name: string } & React.ComponentProps<LucideIcon>) {
+  const IconComponent = getSfIcon(name);
+  return <IconComponent {...props} />;
+}
+
 // --- Icon Picker Component ---
 
-function IconPicker({ value, onChange, lang }: { value: string; onChange: (v: string) => void; lang: Language }) {
+const IconPicker = memo(({ value, onChange, lang }: { value: string; onChange: (v: string) => void; lang: Language }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const SelectedIcon = getSfIcon(value);
 
-  const filteredIcons = search
-    ? ICON_CATALOG.filter(e => e.sfName.toLowerCase().includes(search.toLowerCase()))
-    : ICON_CATALOG;
+  // Memoize grouping to avoid O(N*C) filtering on every render
+  const iconsByCategory = useMemo(() => {
+    const filtered = search
+      ? ICON_CATALOG.filter(e => e.sfName.toLowerCase().includes(search.toLowerCase()))
+      : ICON_CATALOG;
 
-  const categories = [...new Set(filteredIcons.map(e => e.category))];
+    const grouped: Record<string, IconEntry[]> = {};
+    for (const icon of filtered) {
+      if (!grouped[icon.category]) grouped[icon.category] = [];
+      grouped[icon.category].push(icon);
+    }
+    return grouped;
+  }, [search]);
+
+  const categories = useMemo(() => Object.keys(iconsByCategory), [iconsByCategory]);
 
   return (
     <div className="relative">
@@ -458,7 +472,7 @@ function IconPicker({ value, onChange, lang }: { value: string; onChange: (v: st
         onClick={() => setOpen(!open)}
         className="w-full flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-slate-100 hover:border-slate-500 transition-all text-left"
       >
-        <SelectedIcon className="w-5 h-5 text-blue-400 shrink-0" strokeWidth={1.5} />
+        <DynamicIcon name={value || 'house.fill'} className="w-5 h-5 text-blue-400 shrink-0" strokeWidth={1.5} />
         <span className="flex-1 truncate text-sm">{value || 'house.fill'}</span>
         <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
@@ -479,8 +493,7 @@ function IconPicker({ value, onChange, lang }: { value: string; onChange: (v: st
           {/* Icon grid by category */}
           <div className="overflow-y-auto p-2 space-y-3">
             {categories.map(cat => {
-              const icons = filteredIcons.filter(e => e.category === cat);
-              if (icons.length === 0) return null;
+              const icons = iconsByCategory[cat];
               return (
                 <div key={cat}>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 px-1">
@@ -488,7 +501,6 @@ function IconPicker({ value, onChange, lang }: { value: string; onChange: (v: st
                   </p>
                   <div className="grid grid-cols-6 gap-1">
                     {icons.map(entry => {
-                      const Icon = entry.icon;
                       const isSelected = value === entry.sfName;
                       return (
                         <button
@@ -502,7 +514,7 @@ function IconPicker({ value, onChange, lang }: { value: string; onChange: (v: st
                           }`}
                           title={entry.sfName}
                         >
-                          <Icon className={`w-5 h-5 ${isSelected ? 'text-blue-400' : 'text-slate-300'}`} strokeWidth={1.5} />
+                          <DynamicIcon name={entry.sfName} className={`w-5 h-5 ${isSelected ? 'text-blue-400' : 'text-slate-300'}`} strokeWidth={1.5} />
                           <span className="text-[7px] text-slate-500 leading-tight truncate w-full text-center">
                             {entry.sfName.split('.')[0]}
                           </span>
@@ -518,7 +530,7 @@ function IconPicker({ value, onChange, lang }: { value: string; onChange: (v: st
       )}
     </div>
   );
-}
+});
 
 // --- Watch Preview Component ---
 
@@ -752,67 +764,85 @@ export default function App() {
   }, [config]);
 
   // Action management
-  const updateAction = (index: number, field: keyof ActionItem, value: string | boolean) => {
-    const newActions = [...config.actions];
-    newActions[index] = { ...newActions[index], [field]: value };
+  const updateAction = useCallback((index: number, field: keyof ActionItem, value: string | boolean) => {
+    setConfig(prev => {
+      const newActions = [...prev.actions];
+      newActions[index] = { ...newActions[index], [field]: value };
 
-    // Reset service when domain changes
-    if (field === 'domain') {
-      const services = SERVICES_BY_DOMAIN[value as string] || ['turn_on'];
-      newActions[index].service = services[0];
-    }
+      // Reset service when domain changes
+      if (field === 'domain') {
+        const services = SERVICES_BY_DOMAIN[value as string] || ['turn_on'];
+        newActions[index].service = services[0];
+      }
+      return { ...prev, actions: newActions };
+    });
+  }, []);
 
-    setConfig({ ...config, actions: newActions });
-  };
+  const addAction = useCallback(() => {
+    setConfig(prev => {
+      if (prev.actions.length >= MAX_ACTIONS) return prev;
 
-  const addAction = () => {
-    if (config.actions.length >= MAX_ACTIONS) return;
-    const newIndex = config.actions.length;
-    setConfig({ ...config, actions: [...config.actions, { ...DEFAULT_ACTION }] });
-    setExpandedActions(new Set([...expandedActions, newIndex]));
-  };
+      const newIndex = prev.actions.length;
+      setExpandedActions(current => new Set([...current, newIndex]));
 
-  const addEmptySlot = () => {
-    if (config.actions.length >= MAX_ACTIONS) return;
-    setConfig({ ...config, actions: [...config.actions, { ...EMPTY_SLOT }] });
-  };
+      return { ...prev, actions: [...prev.actions, { ...DEFAULT_ACTION }] };
+    });
+  }, []);
 
-  const removeAction = (index: number) => {
-    const newActions = [...config.actions];
-    newActions.splice(index, 1);
-    if (newActions.length === 0) newActions.push({ ...DEFAULT_ACTION });
-    setConfig({ ...config, actions: newActions });
+  const addEmptySlot = useCallback(() => {
+    setConfig(prev => {
+      if (prev.actions.length >= MAX_ACTIONS) return prev;
+      return { ...prev, actions: [...prev.actions, { ...EMPTY_SLOT }] };
+    });
+  }, []);
+
+  const removeAction = useCallback((index: number) => {
+    setConfig(prev => {
+      const newActions = [...prev.actions];
+      newActions.splice(index, 1);
+      if (newActions.length === 0) newActions.push({ ...DEFAULT_ACTION });
+      return { ...prev, actions: newActions };
+    });
     // Rebuild expanded set
-    const newExpanded = new Set<number>();
-    expandedActions.forEach(i => {
-      if (i < index) newExpanded.add(i);
-      else if (i > index) newExpanded.add(i - 1);
+    setExpandedActions(prev => {
+      const newExpanded = new Set<number>();
+      prev.forEach(i => {
+        if (i < index) newExpanded.add(i);
+        else if (i > index) newExpanded.add(i - 1);
+      });
+      return newExpanded;
     });
-    setExpandedActions(newExpanded);
-  };
+  }, []);
 
-  const toggleExpanded = (index: number) => {
-    const newSet = new Set(expandedActions);
-    if (newSet.has(index)) newSet.delete(index);
-    else newSet.add(index);
-    setExpandedActions(newSet);
-  };
+  const toggleExpanded = useCallback((index: number) => {
+    setExpandedActions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) newSet.delete(index);
+      else newSet.add(index);
+      return newSet;
+    });
+  }, []);
 
-  const moveAction = (index: number, direction: -1 | 1) => {
-    const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= config.actions.length) return;
-    const newActions = [...config.actions];
-    [newActions[index], newActions[newIndex]] = [newActions[newIndex], newActions[index]];
-    setConfig({ ...config, actions: newActions });
+  const moveAction = useCallback((index: number, direction: -1 | 1) => {
+    setConfig(prev => {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= prev.actions.length) return prev;
+      const newActions = [...prev.actions];
+      [newActions[index], newActions[newIndex]] = [newActions[newIndex], newActions[index]];
+      return { ...prev, actions: newActions };
+    });
     // Update expanded state
-    const newExpanded = new Set<number>();
-    expandedActions.forEach(i => {
-      if (i === index) newExpanded.add(newIndex);
-      else if (i === newIndex) newExpanded.add(index);
-      else newExpanded.add(i);
+    setExpandedActions(prev => {
+      const newExpanded = new Set<number>();
+      const targetIndex = index + direction;
+      prev.forEach(i => {
+        if (i === index) newExpanded.add(targetIndex);
+        else if (i === targetIndex) newExpanded.add(index);
+        else newExpanded.add(i);
+      });
+      return newExpanded;
     });
-    setExpandedActions(newExpanded);
-  };
+  }, []);
 
   // Import (supports both compressed HAD1: format and raw JSON)
   const handleImport = () => {
