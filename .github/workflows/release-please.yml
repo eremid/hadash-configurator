@@ -1,0 +1,34 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Project / Release
+
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  release-please:
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Run Release Please Action
+      uses: googleapis/release-please-action@v4
+      id: release
+      with:
+        token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        target-branch: ${{ github.ref_name }}
+        config-file: .github/release-please-config.json
+        manifest-file: .github/release-please-manifest.json
+        release-type: node
