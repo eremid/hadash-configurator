@@ -596,6 +596,7 @@ function IconPicker({ value, onChange, lang }: { value: string; onChange: (v: st
               className="w-full text-sm !py-1.5"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              maxLength={64}
               autoFocus
             />
           </div>
@@ -811,9 +812,10 @@ interface InputProps {
   error?: boolean | string;
   errorMessage?: string;
   hint?: string;
+  maxLength?: number;
 }
 
-const InputWithError = ({ label, value, onChange, placeholder, type = "text", error, errorMessage, hint }: InputProps) => (
+const InputWithError = ({ label, value, onChange, placeholder, type = "text", error, errorMessage, hint, maxLength }: InputProps) => (
   <div>
     <label>{label}</label>
     <input
@@ -822,6 +824,7 @@ const InputWithError = ({ label, value, onChange, placeholder, type = "text", er
       className={`w-full ${error ? 'border-red-500 focus:ring-red-500' : ''}`}
       value={value}
       onChange={onChange}
+      maxLength={maxLength}
     />
     {hint && !error && <p className="text-slate-500 text-xs mt-1">{hint}</p>}
     {error && <p className="text-red-500 text-xs mt-1">{errorMessage}</p>}
@@ -1063,6 +1066,7 @@ export default function App() {
                   error={config.haURL !== '' && !isValidHAUrl(config.haURL)}
                   onChange={(e) => setConfig({ ...config, haURL: e.target.value.trim() })}
                   errorMessage={t.validationErrorURL}
+                  maxLength={512}
                 />
                 <InputWithError
                   label={t.haToken}
@@ -1071,6 +1075,7 @@ export default function App() {
                   value={config.haToken}
                   onChange={(e) => setConfig({ ...config, haToken: e.target.value.trim() })}
                   errorMessage=""
+                  maxLength={2048}
                 />
               </div>
             </div>
@@ -1212,6 +1217,7 @@ export default function App() {
                           value={action.label}
                           onChange={(e) => updateAction(index, 'label', e.target.value)}
                           errorMessage=""
+                          maxLength={32}
                         />
                         <IconPicker
                           value={action.icon}
@@ -1276,6 +1282,7 @@ export default function App() {
                         error={action.entityId !== '' && !isValidEntityId(action.entityId)}
                         onChange={(e) => updateAction(index, 'entityId', e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ''))}
                         errorMessage={t.validationErrorEntity}
+                        maxLength={128}
                       />
 
                       {/* Status Entity ID */}
@@ -1287,6 +1294,7 @@ export default function App() {
                         onChange={(e) => updateAction(index, 'statusEntityId', e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ''))}
                         errorMessage={t.validationErrorEntity}
                         hint={t.actionStatusEntityHint}
+                        maxLength={128}
                       />
 
                       {/* Service Data */}
@@ -1298,6 +1306,7 @@ export default function App() {
                           className={`w-full ${action.serviceData && !isValidJson(action.serviceData) ? 'border-red-500 focus:ring-red-500' : ''}`}
                           value={action.serviceData}
                           onChange={(e) => updateAction(index, 'serviceData', e.target.value)}
+                          maxLength={2048}
                         />
                         {action.serviceData && !isValidJson(action.serviceData) && (
                           <p className="text-red-500 text-xs mt-1">{t.validationErrorJson}</p>
