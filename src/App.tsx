@@ -78,6 +78,51 @@ import {
   PartyPopper,
   Siren,
   CircleStop,
+  // New icons for Swift parity
+  Lamp,
+  LampDesk,
+  LampFloor,
+  LampCeiling,
+  Plug,
+  ThermometerSun,
+  ThermometerSnowflake,
+  Wind,
+  Cloud,
+  ShieldHalf,
+  Video,
+  Fence,
+  AppWindow,
+  AppWindowMac,
+  Volume1,
+  Speaker,
+  Airplay,
+  Headphones,
+  Building2,
+  ShowerHead,
+  WashingMachine,
+  Refrigerator,
+  CookingPot,
+  Microwave,
+  Leaf,
+  Cog,
+  Clock,
+  Timer,
+  Sunrise,
+  MoonStar,
+  MapPin,
+  PersonStanding,
+  Radio,
+  RefreshCw,
+  Repeat,
+  Bike,
+  CircleParking,
+  BatteryCharging,
+  Waves,
+  Paintbrush,
+  Wrench,
+  ThumbsUp,
+  CircleCheck,
+  CircleX,
 } from 'lucide-react';
 
 // --- Types ---
@@ -91,6 +136,7 @@ interface ActionItem {
   entityId: string;
   serviceData: string;
   confirm: boolean;
+  useLightColor: boolean;
   statusEntityId: string;
   isEmpty: boolean;
 }
@@ -135,6 +181,7 @@ const DEFAULT_ACTION: ActionItem = {
   entityId: '',
   serviceData: '',
   confirm: false,
+  useLightColor: false,
   statusEntityId: '',
   isEmpty: false,
 };
@@ -157,7 +204,7 @@ const KEY_TO_SHORT: Record<string, string> = {
   haURL: 'u', haToken: 't', actions: 'a',
   label: 'l', icon: 'i', color: 'c', domain: 'd', service: 's',
   entity_id: 'e', service_data: 'sd', status_entity_id: 'se',
-  confirm: 'cf', empty: 'x',
+  confirm: 'cf', useLightColor: 'lc', empty: 'x',
 };
 
 const SHORT_TO_KEY: Record<string, string> = Object.fromEntries(
@@ -235,6 +282,7 @@ const translations = {
     actionEntityId: "Entity ID",
     actionServiceData: "Donnees supplementaires (JSON)",
     actionConfirm: "Confirmation avant execution",
+    actionUseLightColor: "Couleur dynamique (Light)",
     actionStatusEntity: "Entite de statut (optionnel)",
     actionStatusEntityHint: "Affiche l'etat de cette entite sur le bouton (ex: capteur de temperature)",
     placeholderStatusEntity: "sensor.temperature_salon",
@@ -282,6 +330,7 @@ const translations = {
     actionEntityId: "Entity ID",
     actionServiceData: "Additional Data (JSON)",
     actionConfirm: "Confirm before execution",
+    actionUseLightColor: "Dynamic color (Light)",
     actionStatusEntity: "Status entity (optional)",
     actionStatusEntityHint: "Displays this entity's state on the button (e.g., temperature sensor)",
     placeholderStatusEntity: "sensor.living_room_temp",
@@ -323,16 +372,26 @@ interface IconEntry {
 }
 
 const ICON_CATALOG: IconEntry[] = [
-  // Maison & Pieces
+  // Maison
   { sfName: 'house.fill', icon: HomeIcon, category: 'home' },
+  { sfName: 'house', icon: HomeIcon, category: 'home' },
+  { sfName: 'building.2.fill', icon: Building2, category: 'home' },
   { sfName: 'bed.double.fill', icon: Bed, category: 'home' },
+  { sfName: 'bathtub.fill', icon: Bath, category: 'home' },
+  { sfName: 'shower.fill', icon: ShowerHead, category: 'home' },
   { sfName: 'sofa.fill', icon: Sofa, category: 'home' },
   { sfName: 'fork.knife', icon: Utensils, category: 'home' },
-  { sfName: 'bathtub.fill', icon: Bath, category: 'home' },
+  { sfName: 'washer.fill', icon: WashingMachine, category: 'home' },
+  { sfName: 'dryer.fill', icon: WashingMachine, category: 'home' },
+  { sfName: 'refrigerator.fill', icon: Refrigerator, category: 'home' },
+  { sfName: 'cooktop.fill', icon: CookingPot, category: 'home' },
+  { sfName: 'oven.fill', icon: CookingPot, category: 'home' },
+  { sfName: 'microwave.fill', icon: Microwave, category: 'home' },
+  { sfName: 'spigot.fill', icon: Droplets, category: 'home' },
+  { sfName: 'drop.fill', icon: Droplets, category: 'home' },
+  { sfName: 'leaf.fill', icon: Leaf, category: 'home' },
   { sfName: 'tree.fill', icon: TreePine, category: 'home' },
-  { sfName: 'door.left.hand.open', icon: DoorOpen, category: 'home' },
-  { sfName: 'door.left.hand.closed', icon: DoorClosed, category: 'home' },
-  // Personnes & Scenes
+  // Scenes
   { sfName: 'person.fill', icon: User, category: 'scenes' },
   { sfName: 'moon.fill', icon: Moon, category: 'scenes' },
   { sfName: 'sun.max.fill', icon: Sun, category: 'scenes' },
@@ -340,50 +399,117 @@ const ICON_CATALOG: IconEntry[] = [
   { sfName: 'star.fill', icon: Star, category: 'scenes' },
   { sfName: 'heart.fill', icon: Heart, category: 'scenes' },
   { sfName: 'party.popper.fill', icon: PartyPopper, category: 'scenes' },
-  // Eclairage & Energie
+  // Eclairage
   { sfName: 'lightbulb.fill', icon: Lightbulb, category: 'light' },
-  { sfName: 'power', icon: Power, category: 'light' },
-  { sfName: 'bolt.fill', icon: Zap, category: 'light' },
+  { sfName: 'lightbulb', icon: Lightbulb, category: 'light' },
+  { sfName: 'lightbulb.min.fill', icon: Lightbulb, category: 'light' },
+  { sfName: 'lightbulb.max.fill', icon: Lightbulb, category: 'light' },
+  { sfName: 'lamp.desk.fill', icon: LampDesk, category: 'light' },
+  { sfName: 'lamp.floor.fill', icon: LampFloor, category: 'light' },
+  { sfName: 'lamp.table.fill', icon: Lamp, category: 'light' },
+  { sfName: 'lamp.ceiling.fill', icon: LampCeiling, category: 'light' },
+  { sfName: 'light.strip.leftright.fill', icon: Lightbulb, category: 'light' },
+  { sfName: 'chandelier.fill', icon: Lamp, category: 'light' },
+  { sfName: 'light.recessed.fill', icon: Lightbulb, category: 'light' },
+  { sfName: 'light.cylindrical.ceiling.fill', icon: Lightbulb, category: 'light' },
+  { sfName: 'light.panel.fill', icon: Lightbulb, category: 'light' },
   { sfName: 'display', icon: Tv, category: 'light' },
   { sfName: 'tv.fill', icon: Tv, category: 'light' },
-  // Volets & Couvertures
-  { sfName: 'blinds.vertical.open', icon: Blinds, category: 'cover' },
-  { sfName: 'blinds.vertical.closed', icon: Blinds, category: 'cover' },
+  // Prises & Interrupteurs
+  { sfName: 'power', icon: Power, category: 'plugs' },
+  { sfName: 'bolt.fill', icon: Zap, category: 'plugs' },
+  { sfName: 'powerplug.fill', icon: Plug, category: 'plugs' },
+  { sfName: 'switch.2', icon: ToggleLeft, category: 'plugs' },
+  { sfName: 'toggle.power', icon: ToggleLeft, category: 'plugs' },
+  { sfName: 'poweron', icon: Power, category: 'plugs' },
+  { sfName: 'poweroff', icon: Power, category: 'plugs' },
+  { sfName: 'outlet.ac.fill', icon: Plug, category: 'plugs' },
+  // Portes & Volets
+  { sfName: 'door.left.hand.closed', icon: DoorClosed, category: 'doors' },
+  { sfName: 'door.left.hand.open', icon: DoorOpen, category: 'doors' },
+  { sfName: 'door.garage.closed', icon: DoorClosed, category: 'doors' },
+  { sfName: 'door.garage.open', icon: DoorOpen, category: 'doors' },
+  { sfName: 'window.vertical.closed', icon: AppWindow, category: 'doors' },
+  { sfName: 'window.vertical.open', icon: AppWindowMac, category: 'doors' },
+  { sfName: 'blinds.vertical.closed', icon: Blinds, category: 'doors' },
+  { sfName: 'blinds.vertical.open', icon: Blinds, category: 'doors' },
+  { sfName: 'gate.fill', icon: Fence, category: 'doors' },
+  // Volets (controles)
   { sfName: 'arrow.up.to.line', icon: ArrowUpFromLine, category: 'cover' },
   { sfName: 'arrow.down.to.line', icon: ArrowDownToLine, category: 'cover' },
   { sfName: 'stop.fill', icon: CircleStop, category: 'cover' },
   { sfName: 'square.fill', icon: Square, category: 'cover' },
   // Climat
   { sfName: 'thermometer', icon: Thermometer, category: 'climate' },
+  { sfName: 'thermometer.medium', icon: Thermometer, category: 'climate' },
+  { sfName: 'thermometer.sun.fill', icon: ThermometerSun, category: 'climate' },
+  { sfName: 'thermometer.snowflake', icon: ThermometerSnowflake, category: 'climate' },
   { sfName: 'fan.fill', icon: Fan, category: 'climate' },
+  { sfName: 'fan', icon: Fan, category: 'climate' },
   { sfName: 'snowflake', icon: Snowflake, category: 'climate' },
   { sfName: 'flame.fill', icon: Flame, category: 'climate' },
   { sfName: 'heater', icon: Heater, category: 'climate' },
   { sfName: 'air.vent', icon: AirVent, category: 'climate' },
-  { sfName: 'drop.fill', icon: Droplets, category: 'climate' },
+  { sfName: 'air.conditioner.horizontal.fill', icon: AirVent, category: 'climate' },
+  { sfName: 'humidity.fill', icon: Droplets, category: 'climate' },
+  { sfName: 'wind', icon: Wind, category: 'climate' },
+  { sfName: 'cloud.fill', icon: Cloud, category: 'climate' },
   { sfName: 'cloud.rain.fill', icon: CloudRain, category: 'climate' },
   // Securite
   { sfName: 'lock.fill', icon: Lock, category: 'security' },
   { sfName: 'lock.open.fill', icon: Unlock, category: 'security' },
   { sfName: 'shield.fill', icon: Shield, category: 'security' },
+  { sfName: 'shield.lefthalf.filled', icon: ShieldHalf, category: 'security' },
   { sfName: 'camera.fill', icon: Camera, category: 'security' },
+  { sfName: 'video.fill', icon: Video, category: 'security' },
+  { sfName: 'web.camera.fill', icon: Camera, category: 'security' },
   { sfName: 'bell.fill', icon: Bell, category: 'security' },
   { sfName: 'bell.slash.fill', icon: BellOff, category: 'security' },
   { sfName: 'eye.fill', icon: Eye, category: 'security' },
   { sfName: 'eye.slash.fill', icon: EyeOff, category: 'security' },
+  { sfName: 'exclamationmark.triangle.fill', icon: AlertTriangle, category: 'security' },
   { sfName: 'light.beacon.max.fill', icon: Siren, category: 'security' },
-  // Media & Divertissement
+  { sfName: 'sensor.fill', icon: Radio, category: 'security' },
+  { sfName: 'sensor.tag.radiowaves.forward.fill', icon: Radio, category: 'security' },
+  // Media
   { sfName: 'play.fill', icon: Play, category: 'media' },
   { sfName: 'pause.fill', icon: Pause, category: 'media' },
+  { sfName: 'stop.fill', icon: CircleStop, category: 'media' },
   { sfName: 'music.note', icon: Music, category: 'media' },
   { sfName: 'speaker.wave.2.fill', icon: Volume2, category: 'media' },
+  { sfName: 'speaker.fill', icon: Volume1, category: 'media' },
   { sfName: 'speaker.slash.fill', icon: VolumeX, category: 'media' },
+  { sfName: 'hifispeaker.fill', icon: Speaker, category: 'media' },
+  { sfName: 'airplayaudio', icon: Airplay, category: 'media' },
+  { sfName: 'headphones', icon: Headphones, category: 'media' },
   { sfName: 'film.fill', icon: Clapperboard, category: 'media' },
   { sfName: 'gamecontroller.fill', icon: Gamepad2, category: 'media' },
+  // Automatisation
+  { sfName: 'gearshape.fill', icon: Cog, category: 'automation' },
+  { sfName: 'gearshape.2.fill', icon: Settings, category: 'automation' },
+  { sfName: 'clock.fill', icon: Clock, category: 'automation' },
+  { sfName: 'timer', icon: Timer, category: 'automation' },
+  { sfName: 'sunrise.fill', icon: Sunrise, category: 'automation' },
+  { sfName: 'moon.stars.fill', icon: MoonStar, category: 'automation' },
+  { sfName: 'location.fill', icon: MapPin, category: 'automation' },
+  { sfName: 'figure.walk', icon: PersonStanding, category: 'automation' },
+  { sfName: 'antenna.radiowaves.left.and.right', icon: Radio, category: 'automation' },
+  { sfName: 'wifi', icon: Wifi, category: 'automation' },
+  { sfName: 'arrow.triangle.2.circlepath', icon: RefreshCw, category: 'automation' },
+  { sfName: 'repeat', icon: Repeat, category: 'automation' },
   // Divers
   { sfName: 'car.fill', icon: Car, category: 'other' },
+  { sfName: 'bicycle', icon: Bike, category: 'other' },
+  { sfName: 'parkingsign', icon: CircleParking, category: 'other' },
   { sfName: 'cup.and.saucer.fill', icon: Coffee, category: 'other' },
-  { sfName: 'wifi', icon: Wifi, category: 'other' },
+  { sfName: 'battery.100.bolt', icon: BatteryCharging, category: 'other' },
+  { sfName: 'bolt.batteryblock.fill', icon: BatteryCharging, category: 'other' },
+  { sfName: 'water.waves', icon: Waves, category: 'other' },
+  { sfName: 'paintbrush.fill', icon: Paintbrush, category: 'other' },
+  { sfName: 'wrench.fill', icon: Wrench, category: 'other' },
+  { sfName: 'hand.thumbsup.fill', icon: ThumbsUp, category: 'other' },
+  { sfName: 'checkmark.circle.fill', icon: CircleCheck, category: 'other' },
+  { sfName: 'xmark.circle.fill', icon: CircleX, category: 'other' },
   { sfName: 'wifi.slash', icon: WifiOff, category: 'other' },
   { sfName: 'xmark', icon: X, category: 'other' },
 ];
@@ -392,10 +518,13 @@ const ICON_CATEGORIES: Record<string, { fr: string; en: string }> = {
   home: { fr: 'Maison', en: 'Home' },
   scenes: { fr: 'Scenes', en: 'Scenes' },
   light: { fr: 'Eclairage', en: 'Lighting' },
-  cover: { fr: 'Volets', en: 'Covers' },
+  plugs: { fr: 'Prises & Interrupteurs', en: 'Plugs & Switches' },
+  doors: { fr: 'Portes & Volets', en: 'Doors & Shutters' },
+  cover: { fr: 'Volets (controles)', en: 'Cover controls' },
   climate: { fr: 'Climat', en: 'Climate' },
   security: { fr: 'Securite', en: 'Security' },
   media: { fr: 'Media', en: 'Media' },
+  automation: { fr: 'Automatisation', en: 'Automation' },
   other: { fr: 'Divers', en: 'Other' },
 };
 
@@ -404,16 +533,13 @@ const SF_SYMBOL_MAP: Record<string, LucideIcon> = {};
 for (const entry of ICON_CATALOG) {
   SF_SYMBOL_MAP[entry.sfName] = entry.icon;
 }
-// Add aliases
-SF_SYMBOL_MAP['house'] = HomeIcon;
+// Aliases for bare SF Symbol names (without .fill) not in the catalog
 SF_SYMBOL_MAP['person'] = User;
 SF_SYMBOL_MAP['moon'] = Moon;
-SF_SYMBOL_MAP['lightbulb'] = Lightbulb;
 SF_SYMBOL_MAP['sun.max'] = Sun;
 SF_SYMBOL_MAP['sun.min.fill'] = Sun;
 SF_SYMBOL_MAP['lock'] = Lock;
 SF_SYMBOL_MAP['lock.open'] = Unlock;
-SF_SYMBOL_MAP['fan'] = Fan;
 SF_SYMBOL_MAP['tv'] = Tv;
 SF_SYMBOL_MAP['bell'] = Bell;
 SF_SYMBOL_MAP['bell.slash'] = BellOff;
@@ -428,10 +554,7 @@ SF_SYMBOL_MAP['bolt'] = Zap;
 SF_SYMBOL_MAP['cloud.rain'] = CloudRain;
 SF_SYMBOL_MAP['flame'] = Flame;
 SF_SYMBOL_MAP['desktopcomputer'] = Tv;
-SF_SYMBOL_MAP['poweroff'] = Power;
 SF_SYMBOL_MAP['light.max'] = Lightbulb;
-SF_SYMBOL_MAP['thermometer.medium'] = Thermometer;
-SF_SYMBOL_MAP['hifispeaker.fill'] = Music;
 
 function getSfIcon(name: string): LucideIcon {
   return SF_SYMBOL_MAP[name] || HomeIcon;
@@ -575,16 +698,19 @@ function WatchPreview({ actions, title, lang }: { actions: ActionItem[]; title: 
                           />
                         );
                       }
-                      const colors = WATCH_COLOR_MAP[action.color] || WATCH_COLOR_MAP.blue;
+                      const isDynamicLight = action.useLightColor && action.domain === 'light';
+                      const colors = isDynamicLight
+                        ? { border: '#fbbf24', text: '#fcd34d', bg: 'rgba(251,191,36,0.15)' }
+                        : (WATCH_COLOR_MAP[action.color] || WATCH_COLOR_MAP.blue);
                       const IconComponent = getSfIcon(action.icon);
                       const hasStatus = action.statusEntityId?.trim();
 
                       return (
                         <div
                           key={i}
-                          className={`rounded-2xl flex flex-col items-center justify-center relative ${hasStatus ? 'gap-0.5' : 'gap-1.5'} h-[88px] transition-all`}
+                          className={`rounded-2xl flex flex-col items-center justify-center relative ${hasStatus ? 'gap-0.5' : 'gap-1.5'} h-[88px] transition-all ${isDynamicLight ? 'shadow-[inset_0_0_12px_rgba(251,191,36,0.1)]' : ''}`}
                           style={{
-                            border: `2px solid ${colors.border}`,
+                            border: isDynamicLight ? '2px dashed #fbbf24' : `2px solid ${colors.border}`,
                             backgroundColor: colors.bg,
                           }}
                         >
@@ -739,6 +865,7 @@ export default function App() {
         }
         if (a.statusEntityId.trim()) action.status_entity_id = a.statusEntityId.trim();
         if (a.confirm) action.confirm = true;
+        if (a.useLightColor && a.domain === 'light') action.useLightColor = true;
         return action;
       });
 
@@ -760,6 +887,9 @@ export default function App() {
     if (field === 'domain') {
       const services = SERVICES_BY_DOMAIN[value as string] || ['turn_on'];
       newActions[index].service = services[0];
+      if (value !== 'light') {
+        newActions[index].useLightColor = false;
+      }
     }
 
     setConfig({ ...config, actions: newActions });
@@ -838,9 +968,10 @@ export default function App() {
               service: String(a.service || 'turn_on'),
               entityId: String(a.entity_id || a.entityId || ''),
               serviceData: a.service_data ? JSON.stringify(a.service_data) : '',
-              confirm: Boolean(a.confirm),
+              confirm: Boolean(a.confirm || a.cf),
+              useLightColor: Boolean(a.useLightColor || a.lc),
               statusEntityId: String(a.status_entity_id || a.statusEntityId || ''),
-              isEmpty: Boolean(a.empty || a.isEmpty),
+              isEmpty: Boolean(a.empty || a.isEmpty || a.x),
             };
           })
         : [{ ...DEFAULT_ACTION }];
@@ -1187,6 +1318,23 @@ export default function App() {
                         </button>
                         <span className="text-sm text-slate-400">{t.actionConfirm}</span>
                       </div>
+
+                      {/* Dynamic Color (Light only) */}
+                      {action.domain === 'light' && (
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => updateAction(index, 'useLightColor', !action.useLightColor)}
+                            className="text-slate-400 hover:text-slate-200 transition-colors"
+                          >
+                            {action.useLightColor ? (
+                              <ToggleRight className="w-8 h-8 text-yellow-500" />
+                            ) : (
+                              <ToggleLeft className="w-8 h-8" />
+                            )}
+                          </button>
+                          <span className="text-sm text-slate-400">{t.actionUseLightColor}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
